@@ -1,0 +1,139 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Personel;
+use App\Models\Resultat;
+use App\Models\Skills;
+use App\Models\Students;
+use App\Models\Technique;
+use App\Models\User;
+
+class EntretienController extends Controller
+{
+    // ===================== Personel =====================
+    public function getPersonels()
+    {
+        return response()->json(Personel::all(), 200);
+    }
+
+    public function ajouterPer(Request $request)
+    {
+        $per = Personel::create($request->all());
+        return response()->json(["message" => "Le personnel est bien ajouté", "data" => $per], 201);
+    }
+
+    public function modifierPer(Request $request, $id)
+    {
+        $per = Personel::findOrFail($id);
+        $per->update($request->all());
+        return response()->json(["message" => "Le personnel est bien modifié", "data" => $per], 200);
+    }
+
+    public function supprimerPer($id)
+    {
+        $deleted = Personel::destroy($id);
+        return $deleted
+            ? response()->json(["message" => "Le personnel id=$id est bien supprimé"], 200)
+            : response()->json(["message" => "Erreur : le personnel id=$id n'est pas supprimé"], 400);
+    }
+
+    // ===================== Technique =====================
+    public function getTechniques()
+    {
+        return response()->json(Technique::all(), 200);
+    }
+
+    public function ajouterTech(Request $request)
+    {
+        $tech = Technique::create($request->all());
+        return response()->json(["message" => "La technique est bien ajoutée", "data" => $tech], 201);
+    }
+
+    public function modifierTech(Request $request, $id)
+    {
+        $tech = Technique::findOrFail($id);
+        $tech->update($request->all());
+        return response()->json(["message" => "La technique est bien modifiée", "data" => $tech], 200);
+    }
+
+    public function supprimerTech($id)
+    {
+        $deleted = Technique::destroy($id);
+        return $deleted
+            ? response()->json(["message" => "La technique id=$id est bien supprimée"], 200)
+            : response()->json(["message" => "Erreur : la technique id=$id n'est pas supprimée"], 400);
+    }
+
+    // ===================== Students =====================
+    public function getStudents()
+    {
+        return response()->json(Students::all(), 200);
+    }
+
+    public function ajouterStu(Request $request)
+    {
+        $stu = Students::create($request->all());
+        return response()->json(["message" => "L'étudiant est bien ajouté", "data" => $stu], 201);
+    }
+
+    public function modifierStu(Request $request, $id)
+    {
+        $stu = Students::findOrFail($id);
+        $stu->update($request->all());
+        return response()->json(["message" => "L'étudiant est bien modifié", "data" => $stu], 200);
+    }
+
+    public function supprimerStu($id)
+    {
+        $deleted = Students::destroy($id);
+        return $deleted
+            ? response()->json(["message" => "L'étudiant id=$id est bien supprimé"], 200)
+            : response()->json(["message" => "Erreur : l'étudiant id=$id n'est pas supprimé"], 400);
+    }
+
+    // ===================== Resultats =====================
+    public function getResultats()
+    {
+        return response()->json(Resultat::all(), 200);
+    }
+
+    public function ajouterResu(Request $request)
+    {
+        $res = Resultat::create($request->all());
+        return response()->json(["message" => "Le résultat est bien ajouté", "data" => $res], 201);
+    }
+
+    // ✅ تحديث حالة الطلاب (Top 12 ناجحين والباقي انتظار)
+    public function updateStatusTop12()
+    {
+        $top12 = Resultat::orderByDesc('total')
+            ->take(12)
+            ->pluck('id_stu')
+            ->toArray();
+
+        Students::whereIn('id_stu', $top12)
+            ->update(['status' => 'نجاح']);
+
+        Students::whereNotIn('id_stu', $top12)
+            ->update(['status' => 'انتظار']);
+
+        return response()->json(["message" => "تم تحديث الحالات بنجاح"], 200);
+    }
+
+    // ✅ جلب التلاميذ في حالة انتظار مع ترتيبهم حسب النقاط
+    public function getWaitingStudents()
+    {
+        $waiting = Students::with('Resultat')
+            ->where('status', 'انتظار')
+            ->orderByDesc(
+                Resultat::select('total')
+                    ->whereColumn('resultat.id_stu', 'students.id_stu')
+                    ->limit(1)
+            )
+            ->get();
+
+        return response()->json($waiting, 200);
+    }
+}
