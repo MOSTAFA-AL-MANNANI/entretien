@@ -10,7 +10,7 @@ use App\Models\Students;
 use App\Models\Technique;
 use App\Models\User;
 
-class EntretienController extends Controller
+class Entretien extends Controller
 {
     // ===================== Personel =====================
     public function getPersonels()
@@ -99,11 +99,30 @@ class EntretienController extends Controller
         return response()->json(Resultat::all(), 200);
     }
 
-    public function ajouterResu(Request $request)
-    {
-        $res = Resultat::create($request->all());
-        return response()->json(["message" => "Le résultat est bien ajouté", "data" => $res], 201);
-    }
+public function ajouterResu(Request $request)
+{
+    // ✅ التحقق من صحة البيانات
+    $validated = $request->validate([
+        'id_stu'  => 'required|exists:students,id_stu',
+        'scoreP'  => 'required|numeric|min:0',
+        'scoreT'  => 'required|numeric|min:0',
+        'scoreS'  => 'nullable|numeric|min:0',
+        'total'   => 'required|numeric|min:0',
+    ]);
+
+    // ✅ إنشاء résultat
+    $res = Resultat::create($validated);
+
+    // ✅ تحديث حالة الطالب
+    Students::where('id_stu', $validated['id_stu'])
+        ->update(['status' => 'in_interview']);
+
+    return response()->json([
+        "message" => "✅ Le résultat est bien ajouté",
+        "data"    => $res
+    ], 201);
+}
+
 
     // ✅ تحديث حالة الطلاب (Top 12 ناجحين والباقي انتظار)
     public function updateStatusTop12()
@@ -114,10 +133,10 @@ class EntretienController extends Controller
             ->toArray();
 
         Students::whereIn('id_stu', $top12)
-            ->update(['status' => 'نجاح']);
+            ->update(['status' => 'passed']);
 
         Students::whereNotIn('id_stu', $top12)
-            ->update(['status' => 'انتظار']);
+            ->update(['status' => 'attende']);
 
         return response()->json(["message" => "تم تحديث الحالات بنجاح"], 200);
     }
@@ -126,7 +145,7 @@ class EntretienController extends Controller
     public function getWaitingStudents()
     {
         $waiting = Students::with('Resultat')
-            ->where('status', 'انتظار')
+            ->where('status', 'attende')
             ->orderByDesc(
                 Resultat::select('total')
                     ->whereColumn('resultat.id_stu', 'students.id_stu')
@@ -136,4 +155,25 @@ class EntretienController extends Controller
 
         return response()->json($waiting, 200);
     }
+    // ✅ جلب أعلى 12 طالب مع معلوماتهم ونتائجهم
+public function getTop12()
+{
+    $top12 = Resultat::with('Students')
+        ->orderByDesc('total')
+        ->take(12)
+        ->get();
+
+    return response()->json($top12, 200);
+}
+
+// ✅ جلب تفاصيل طالب واحد مع نتيجتو
+public function getStudentDetail($id)
+{
+    $student = Students::with('Resultat')
+        ->where('id_stu', $id)
+        ->firstOrFail();
+
+    return response()->json($student, 200);
+}
+
 }

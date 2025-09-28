@@ -2,36 +2,46 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EntretienController;
+use App\Http\Controllers\Entretien;
+use App\Http\Controllers\AuthController;
 
+
+
+Route::middleware('auth:sanctum')->group(function () {
 // ================= Personel =================
-Route::get('/personels', [EntretienController::class, 'getPersonels']);
-Route::post('/personels', [EntretienController::class, 'ajouterPer']);
-Route::put('/personels/{id}', [EntretienController::class, 'modifierPer']);
-Route::delete('/personels/{id}', [EntretienController::class, 'supprimerPer']);
+Route::get('/personels', [Entretien::class, 'getPersonels']);
+Route::post('/personels', [Entretien::class, 'ajouterPer']);
+Route::put('/personels/{id}', [Entretien::class, 'modifierPer']);
+Route::delete('/personels/{id}', [Entretien::class, 'supprimerPer']);
 
 // ================= Technique =================
-Route::get('/techniques', [EntretienController::class, 'getTechniques']);
-Route::post('/techniques', [EntretienController::class, 'ajouterTech']);
-Route::put('/techniques/{id}', [EntretienController::class, 'modifierTech']);
-Route::delete('/techniques/{id}', [EntretienController::class, 'supprimerTech']);
+Route::get('/techniques', [Entretien::class, 'getTechniques']);
+Route::post('/techniques', [Entretien::class, 'ajouterTech']);
+Route::put('/techniques/{id}', [Entretien::class, 'modifierTech']);
+Route::delete('/techniques/{id}', [Entretien::class, 'supprimerTech']);
 
 // ================= Students =================
-Route::get('/students', [EntretienController::class, 'getStudents']);
-Route::post('/students', [EntretienController::class, 'ajouterStu']);
-Route::put('/students/{id}', [EntretienController::class, 'modifierStu']);
-Route::delete('/students/{id}', [EntretienController::class, 'supprimerStu']);
+Route::get('/students', [Entretien::class, 'getStudents']);
+Route::post('/students', [Entretien::class, 'ajouterStu']);
+Route::put('/students/{id}', [Entretien::class, 'modifierStu']);
+Route::delete('/students/{id}', [Entretien::class, 'supprimerStu']);
 
 // ================= Resultats =================
-Route::get('/resultats', [EntretienController::class, 'getResultats']);
-Route::post('/resultats', [EntretienController::class, 'ajouterResu']);
+Route::get('/resultats', [Entretien::class, 'getResultats']);
+Route::post('/resultats', [Entretien::class, 'ajouterResu']);
 
 // ================= Gestion spéciale =================
 // ✅ تحديث حالة الطلاب (Top 12 نجاح والباقي انتظار)
-Route::post('/students/update-status', [EntretienController::class, 'updateStatusTop12']);
+Route::post('/students/update-status', [Entretien::class, 'updateStatusTop12']);
+Route::get('/students/top12', [Entretien::class, 'getTop12']);
+Route::get('/students/{id}/detail', [Entretien::class, 'getStudentDetail']);
 
 // ✅ جلب الطلاب في حالة انتظار مع النقاط
-Route::get('/students/waiting', [EntretienController::class, 'getWaitingStudents']);
+Route::get('/students/waiting', [Entretien::class, 'getWaitingStudents']);
+});
+
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 
 Route::get('/user', function (Request $request) {
