@@ -33,12 +33,16 @@ Route::post('/resultats', [Entretien::class, 'ajouterResu']);
 // ================= Gestion spéciale =================
 // ✅ تحديث حالة الطلاب (Top 12 نجاح والباقي انتظار)
 Route::post('/students/update-status', [Entretien::class, 'updateStatusTop12']);
-Route::get('/students/top12', [Entretien::class, 'getTop12']);
 Route::get('/students/{id}/detail', [Entretien::class, 'getStudentDetail']);
+Route::get('/top-students/{filiere}', [Entretien::class, 'topStudentsByFiliere']);
+
 
 // ✅ جلب الطلاب في حالة انتظار مع النقاط
 Route::get('/students/waiting', [Entretien::class, 'getWaitingStudents']);
 });
+Route::get('/students/{id}', [Entretien::class, 'show']); // للحصول على بيانات الطالب (بما فيها filiere)
+
+Route::get('/techniques', [Entretien::class, 'index']); // يدعم ?filiere=
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);

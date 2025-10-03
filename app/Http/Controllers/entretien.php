@@ -124,22 +124,23 @@ public function ajouterResu(Request $request)
 }
 
 
-    // ✅ تحديث حالة الطلاب (Top 12 ناجحين والباقي انتظار)
-    public function updateStatusTop12()
-    {
-        $top12 = Resultat::orderByDesc('total')
-            ->take(12)
-            ->pluck('id_stu')
-            ->toArray();
+    
+public function topStudentsByFiliere($filiere)
+{
+    $students = \App\Models\Students::with('resultat')
+        ->where('filiere', $filiere)
+        ->where('status', 'in_interview')
+        ->join('resultat', 'students.id_stu', '=', 'resultat.id_stu')
+        ->orderByDesc('resultat.total')
+        ->select('students.*', 'resultat.scoreP', 'resultat.scoreT', 'resultat.scoreS', 'resultat.total')
+        ->take(30)
+        ->get();
 
-        Students::whereIn('id_stu', $top12)
-            ->update(['status' => 'passed']);
+    return response()->json($students);
+}
 
-        Students::whereNotIn('id_stu', $top12)
-            ->update(['status' => 'attende']);
 
-        return response()->json(["message" => "تم تحديث الحالات بنجاح"], 200);
-    }
+
 
     // ✅ جلب التلاميذ في حالة انتظار مع ترتيبهم حسب النقاط
     public function getWaitingStudents()
@@ -175,5 +176,30 @@ public function getStudentDetail($id)
 
     return response()->json($student, 200);
 }
+    // GET /api/techniques?filiere=Développement%20web
+    public function index(Request $request)
+    {
+        $filiere = $request->query('filiere');
 
+        if ($filiere) {
+            $techniques = Technique::where('filiere', $filiere)->get();
+        } else {
+            $techniques = Technique::all();
+        }
+
+        return response()->json($techniques);
+    }
+
+        public function show($id)
+    {
+        $student = Students::where('id_stu', $id)->first();
+
+        if (!$student) {
+            return response()->json(['message' => 'Student not found'], 404);
+        }
+
+        return response()->json($student);
+    }
 }
+
+

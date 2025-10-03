@@ -11,6 +11,6 @@ class Students extends Model
     protected $fillable = ["nom","prenom","numero","genre","date_naissance","niveau_sco","status",
                             "gmail","filiere","cin",];
         public function Resultat(){
-        return $this->hasMany(Resultat::class, "id_stu", "id_stu");
+        return $this->hasOne(Resultat::class, "id_stu", "id_stu");
     }
 }
